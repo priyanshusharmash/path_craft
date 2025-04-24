@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Path Craft</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="login">Login</string>
+    <string name="go_to_sign_up_page">Not yet registered!, SignUp here.</string>
+    <string name="forgotten_password">Forgotten Password?</string>
+    <string name="sign_up">Sign up</string>
+    <string name="submit">Submit</string>
+    <string name="confirm_password_label">Confirm Password</string>
+    <string name="create_password_label">Create Password</string>
+    <string name="full_name_label">Full name</string>
+    <string name="login_instead">Login instead</string>
+</resources>
