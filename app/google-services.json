@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "193471629263",
+    "project_id": "path-craft",
+    "storage_bucket": "path-craft.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:193471629263:android:4b9b2bad93daf696ae74ba",
+        "android_client_info": {
+          "package_name": "com.metaminds.pathcraft"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7sAVcsWQuhpjVT8AAdyaYu8-SoL9r2NQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

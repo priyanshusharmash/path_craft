@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.metaminds.pathcraft" />
+                  <option name="mobileSdkAppId" value="1:193471629263:android:4b9b2bad93daf696ae74ba" />
+                  <option name="projectId" value="path-craft" />
+                  <option name="projectNumber" value="193471629263" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

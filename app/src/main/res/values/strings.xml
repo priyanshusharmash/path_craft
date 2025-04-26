@@ -11,4 +11,9 @@
     <string name="create_password_label">Create Password</string>
     <string name="full_name_label">Full name</string>
     <string name="login_instead">Login instead</string>
+    <string name="send_password_reset_link">Send Password Reset Link</string>
+    <string name="reset_link_send_toast_message">If the email is registered, password reset link send on your mail.</string>
+    <string name="success_log_in">Success Log In</string>
+    <string name="user_created_toast_message">User Created Successfully</string>
+    <string name="passwords_do_not_matches_toast_message">Passwords doesn\'t matches</string>
 </resources>
