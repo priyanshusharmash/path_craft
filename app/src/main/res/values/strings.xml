@@ -16,4 +16,13 @@
     <string name="success_log_in">Success Log In</string>
     <string name="user_created_toast_message">User Created Successfully</string>
     <string name="passwords_do_not_matches_toast_message">Passwords doesn\'t matches</string>
+    <string name="afternoon_greeting_msg">Good Afternoon!\n %s</string>
+    <string name="morning_greeting_msg">Good morning!\n %s</string>
+    <string name="evening_greeting_msg">Good evening!\n %s</string>
+    <string name="night_greeting_msg">Good night!\n%s</string>
+    <string name="section_screen">Section Screen</string>
+    <string name="featured_skills">Featured For You</string>
+    <string name="trending_skills">Trending Skills</string>
+    <string name="chat_screen">Chat Screen</string>
+    <string name="home_screen">Home Screen</string>
 </resources>

@@ -51,8 +51,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object SignUpScreenNavigationDestination : NavigationDestination {
-    override val title: String = SIGN_UP_SCREEN
-    override val route: String = title
+    override val titleRes: Int = R.string.sign_up
+    override val route: String = SIGN_UP_SCREEN
 }
 
 @Composable
@@ -210,7 +210,8 @@ fun SignUpBox(
             )
             Spacer(Modifier.height(20.dp))
             Button(
-                onClick = onSubmit
+                onClick = onSubmit,
+                enabled = uiState.email.isNotEmpty() && uiState.name.isNotEmpty() && uiState.confirmPassword.isNotEmpty()
             ) {
                 Text(text = stringResource(R.string.submit))
             }

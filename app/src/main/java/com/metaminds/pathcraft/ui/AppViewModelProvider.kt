@@ -1,12 +1,15 @@
 package com.metaminds.pathcraft.ui
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.metaminds.pathcraft.PathCraftApplication
 import com.metaminds.pathcraft.ui.viewModels.ChatScreenViewModel
+import com.metaminds.pathcraft.ui.viewModels.HomeScreenViewModel
 import com.metaminds.pathcraft.ui.viewModels.LoginScreenViewModel
+import com.metaminds.pathcraft.ui.viewModels.SectionScreenViewModel
 
 
 object AppViewModelProvider {
@@ -16,6 +19,12 @@ object AppViewModelProvider {
         }
         initializer {
             ChatScreenViewModel(repository = pathCraftApplication().container.repository)
+        }
+        initializer {
+            HomeScreenViewModel(repository = pathCraftApplication().container.repository)
+        }
+        initializer {
+            SectionScreenViewModel(savedStateHandle = this.createSavedStateHandle())
         }
     }
 }

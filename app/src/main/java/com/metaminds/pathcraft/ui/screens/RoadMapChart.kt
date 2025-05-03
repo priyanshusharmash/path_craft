@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,13 +36,13 @@ fun RoadMapChart(
     ) {
         Box(modifier = Modifier
             .padding(
-                top = 10.dp,
+                top=10.dp,
                 bottom = 10.dp,
                 start = 10.dp,
                 end = 70.dp
             )
             .clip(RoundedCornerShape(10.dp))
-            .background(color = Color.Green),) {
+            .background(color = MaterialTheme.colorScheme.primaryContainer),) {
             Column(
                 modifier=Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.Center,
@@ -53,13 +54,14 @@ fun RoadMapChart(
                     ) {
                         Box(modifier=Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(color=Color.Yellow)
+                            .background(color= MaterialTheme.colorScheme.primary)
                             .border(color = Color.Black, shape = RoundedCornerShape(10.dp), width = 1.dp)) {
                             Text(
                                 text = topic,
                                 textAlign = TextAlign.Center,
                                 modifier=Modifier
-                                    .padding(10.dp)
+                                    .padding(10.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
                                 )
                         }
                         if(index != topicList.size-1) {

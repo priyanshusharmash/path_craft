@@ -69,8 +69,8 @@ import kotlinx.coroutines.launch
 
 
 object LoginScreenNavigationDestination: NavigationDestination{
-    override val title: String= LOGIN_SCREEN_TITLE
-    override val route: String = title
+    override val titleRes: Int = R.string.login
+    override val route: String = LOGIN_SCREEN_TITLE
 }
 
 @Composable
@@ -104,15 +104,15 @@ fun LoginScreen(
             }
         )
     }
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { focusManager.clearFocus() },
-        contentAlignment = Alignment.Center
-    ) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { focusManager.clearFocus() },
+            contentAlignment = Alignment.Center
+        ) {
 
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -141,7 +141,8 @@ fun LoginScreen(
                         viewModel.updateAuthState(AuthState.Loading)
                         viewModel.signInWithEmailPassword { isSuccess, errorMessage ->
                             if (isSuccess) {
-                                Toast.makeText(context, successToastMessage, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, successToastMessage, Toast.LENGTH_SHORT)
+                                    .show()
                                 coroutineScope.launch {
                                     delay(500)
                                     navigateToHome()
@@ -158,14 +159,15 @@ fun LoginScreen(
                     }
                 )
                 Spacer(Modifier.height(10.dp))
-                GoToResetPasswordPage(onClick = {forgotPasswordDialogVisible=true})
+                GoToResetPasswordPage(onClick = { forgotPasswordDialogVisible = true })
                 GoToSignUpPage(onClick = navigateToSignUp)
             }
 
-        if(viewModel.authState == AuthState.Loading){
-            ShowLoadingScreen()
+            if (viewModel.authState == AuthState.Loading) {
+                ShowLoadingScreen()
+            }
         }
-    }
+
 }
 @Composable
 private fun LoginBox(
@@ -221,7 +223,7 @@ private fun LoginBox(
                 )
             )
             Spacer(Modifier.height(20.dp))
-            LoginButton(onClick =onLogin)
+            LoginButton(onClick =onLogin, enabled = enteredEmail.isNotEmpty() && enteredPassword.isNotEmpty())
         }
     }
 }
@@ -251,10 +253,11 @@ fun GoToSignUpPage(modifier: Modifier= Modifier,onClick:()-> Unit) {
 
 
 @Composable
-fun LoginButton(modifier: Modifier = Modifier,onClick: () -> Unit) {
+fun LoginButton(modifier: Modifier = Modifier,onClick: () -> Unit,enabled:Boolean) {
     Button(
         modifier = modifier,
-        onClick = onClick
+        onClick = onClick,
+        enabled = enabled
     ) {
         Text(text = stringResource(R.string.login))
     }

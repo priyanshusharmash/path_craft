@@ -10,6 +10,8 @@ interface GeminiRepository {
     fun greetUser(username:String): String
     suspend fun generateRoadmap(topic: String): String
     suspend fun generateSubTopics(): String
+    suspend fun generateFeaturedTopics(): List<String>
+    suspend fun generateTopTrendingSkills():List<String>
 }
 
 data class MessageModel(
