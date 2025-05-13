@@ -17,14 +17,16 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
     val auth=repository.getAuth()
 
 
-    init {
+    fun refreshData(){
         auth.currentUser?.reload()
-        viewModelScope.launch {
+
+        homeUiState= HomeUiState.Loading
+        viewModelScope.launch{
             homeUiState = try {
                 HomeUiState.Success(
                     featuredTopics = repository.generateFeaturedTopics(),
                     trendingTopics = repository.generateTopTrendingSkills(),
-                    userTopics = listOf()
+                    userTopics = repository.getCourseName()
                 )
             }catch (e:Exception){
                 HomeUiState.Error(error= e.message.toString())
@@ -41,15 +43,11 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
             else -> R.string.night_greeting_msg
         }
     }
+
 }
 
 sealed interface HomeUiState{
     class Error(val error: String): HomeUiState
     object Loading: HomeUiState
     class Success(val featuredTopics:List<String>,val trendingTopics:List<String>,val userTopics: List<String>): HomeUiState
-}
-sealed interface SectionName{
-    object TrendingSkills: SectionName
-    object FeaturedSkills: SectionName
-    object UserSkills: SectionName
 }

@@ -1,6 +1,7 @@
 package com.metaminds.pathcraft.ui.viewModels
 
-import android.provider.ContactsContract
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,47 +10,73 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
+import com.google.ai.client.generativeai.Chat
 import com.metaminds.pathcraft.data.AppRepository
 import com.metaminds.pathcraft.data.MessageModel
+import com.metaminds.pathcraft.ui.screens.ChatScreenNavigationDestination
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class ChatScreenViewModel(private val repository: AppRepository) : ViewModel() {
-
-
+class ChatScreenViewModel(
+    private val repository: AppRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
     val messageList = repository.history
     var topicList: List<String> = listOf()
     var chatState: ChatStatus = ChatStatus.GREET
     var dataFetchingState: DataFetchingState by mutableStateOf(DataFetchingState.Loading)
+    var courseName: String = savedStateHandle[ChatScreenNavigationDestination.COURSE] ?: ""
+
+
+    var checkpoints by mutableStateOf("")
 
 
     init {
+        repository.history.clear()
+        messageList.clear()
         val user = repository.getAuth().currentUser
         user?.reload()
         viewModelScope.launch {
             greetUser(user?.displayName.toString())
-        }
-    }
-
-    fun sendMessage(prompt: String): ChatStatus {
-        viewModelScope.launch {
-            if (chatState == ChatStatus.GENERATE_ROADMAP) {
-                generateRoadmap(prompt)
-                dataFetchingState = DataFetchingState.Loading
-                chatState = ChatStatus.GENERATE_SUBTOPICS
-                generateSubTopics()
+            if(courseName.isNotEmpty()){
+                chatState= ChatStatus.GENERATE_ROADMAP
+                delay(1000)
+                sendMessage(courseName)
             }
         }
-        return chatState
     }
 
-    fun getAuth(): FirebaseAuth = repository.getAuth()
+    fun sendMessage(prompt: String){
+        viewModelScope.launch {
+            try {
+                courseName=prompt
+                if (chatState == ChatStatus.GENERATE_ROADMAP) {
+                    generateRoadmap(prompt)
+                    dataFetchingState = DataFetchingState.Loading
+                    chatState = ChatStatus.GENERATE_SUBTOPICS
+                    generateSubTopics()
+                    chatState= ChatStatus.End
+                }
+            }catch (e: Exception){
+                dataFetchingState= DataFetchingState.Error(e.message.toString())
+                repository.history.add(MessageModel(message=e.message.toString(),role="model"))
+            }
+        }
+    }
 
-    fun clearChatHistory() {
-        repository.history.clear()
+    fun onBackPressed(){
+        viewModelScope.cancel()
+        if(chatState== ChatStatus.End) {
+            repository.saveNewCourse(
+                courseName = courseName, courseCheckpointList = parseTopics(
+                    input = checkpoints
+                )
+            )
+        }
     }
 
     private suspend fun greetUser(username: String) {
@@ -69,6 +96,7 @@ class ChatScreenViewModel(private val repository: AppRepository) : ViewModel() {
 
     private suspend fun generateRoadmap(topic: String) {
         repository.history.add(MessageModel(message = topic, role = "user"))
+        dataFetchingState= DataFetchingState.Loading
         delay(1000)
         repository.history.add(
             MessageModel(
@@ -87,51 +115,95 @@ class ChatScreenViewModel(private val repository: AppRepository) : ViewModel() {
         delay(1000)
         repository.history.add(MessageModel(message = "Generating full map...", role = "model"))
         val response = repository.generateSubTopics()
-        delay(1000)
+        checkpoints=response
         repository.history.add(MessageModel(message = response, role = "model"))
         dataFetchingState= DataFetchingState.Success
     }
+
+    private fun parseTopics(input: String): List<CourseCheckpoint> {
+        val regexTopic = Regex("_([^_]+)_") // Matches topics enclosed in `_`
+        val regexSubTopic = Regex("\\*(.*)") // Matches subtopics starting with bullet point `•`
+
+        val result = mutableListOf<CourseCheckpoint>()
+        var currentTopic = ""
+        val subTopics = mutableListOf<String>()
+
+        input.lines().forEach { line ->
+            val topicMatch = regexTopic.find(line)
+            val subTopicMatch = regexSubTopic.find(line)
+
+            if (topicMatch != null) {
+                // Save the previous topic and its subtopics before switching to the new topic
+                if (currentTopic.isNotEmpty()) {
+                    result.add(CourseCheckpoint(checkpoint = currentTopic, subTopics = subTopics.toList()))
+                    subTopics.clear() // Reset for the next topic
+                }
+                currentTopic = topicMatch.groupValues[1] // Extract topic
+            } else if (subTopicMatch != null) {
+                subTopics.add(subTopicMatch.groupValues[1].trim()) // Extract subtopic
+            }
+        }
+
+        // Add last topic and its subtopics
+        if (currentTopic.isNotEmpty()) {
+            result.add(CourseCheckpoint(checkpoint = currentTopic, subTopics = subTopics.toList()))
+        }
+
+        return result
+    }
+
+
+
+    fun formatText(input: String): AnnotatedString {
+        return buildAnnotatedString {
+            val regex = Regex("_(.+?)_")
+            var currentIndex = 0
+            regex.findAll(input).forEach { matchResult ->
+
+                val start = matchResult.range.first
+                val end = matchResult.range.last
+                if (currentIndex < start) {
+                    val normalText = input.substring(currentIndex, start).replace("*", "•")
+                    append(normalText)
+                }
+
+                pushStyle(
+                    SpanStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                )
+                append(matchResult.groupValues[1])
+                pop()
+
+                currentIndex = end + 1
+            }
+            if (currentIndex < input.length) {
+                val remainingText = input.substring(currentIndex).replace("*", "•")
+                append(remainingText)
+            }
+        }
+    }
+
+
 }
 sealed interface DataFetchingState {
     object Success : DataFetchingState
     object Loading : DataFetchingState
-    object Error : DataFetchingState
+    data class Error(val error: String) : DataFetchingState
 }
 
-fun formatText(input: String): AnnotatedString {
-    return buildAnnotatedString {
-        val regex = Regex("_(.+?)_")
-        var currentIndex = 0
 
-        regex.findAll(input).forEach { matchResult ->
-            val start = matchResult.range.first
-            val end = matchResult.range.last
-            if (currentIndex < start) {
-                val normalText = input.substring(currentIndex, start).replace("*", "•")
-                append(normalText)
-            }
-            pushStyle(
-                SpanStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            )
-            append(matchResult.groupValues[1])
-            pop()
-
-            currentIndex = end + 1
-        }
-
-        if (currentIndex < input.length) {
-            val remainingText = input.substring(currentIndex).replace("*", "•")
-            append(remainingText)
-        }
-    }
-}
 
 enum class ChatStatus {
     GREET,
     GENERATE_ROADMAP,
-    GENERATE_SUBTOPICS
+    GENERATE_SUBTOPICS,
+    End
 }
+
+data class CourseCheckpoint(
+    val checkpoint:String,
+    var subTopics:List<String>
+)
 

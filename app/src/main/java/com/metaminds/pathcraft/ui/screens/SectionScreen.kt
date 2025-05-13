@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -41,19 +42,22 @@ object SectionScreenNavigationDestination: NavigationDestination{
 @Composable
 fun SectionScreen(
     modifier: Modifier = Modifier,
-    viewModel: SectionScreenViewModel= viewModel(factory= AppViewModelProvider.factory)
+    viewModel: SectionScreenViewModel= viewModel(factory= AppViewModelProvider.factory),
+    onBackPressed:()-> Unit,
+    navigateToChatScreen:(String)-> Unit
 ) {
     val scrollBehavior=TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold (
         modifier=modifier.fillMaxSize(),
         topBar = {
-            DefaultAppBar(scrollBehavior=scrollBehavior, title = stringResource(viewModel.title))
+            DefaultAppBar(scrollBehavior=scrollBehavior, title = stringResource(viewModel.title), onNavIconClick = {onBackPressed()})
         }
     ){ contentPadding->
         SectionScreenBody(
             modifier=Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             contentPadding = contentPadding,
-            viewModel = viewModel
+            viewModel = viewModel,
+            navigateToChatScreen = {navigateToChatScreen(it)}
         )
     }
 }
@@ -62,7 +66,8 @@ fun SectionScreen(
 fun SectionScreenBody(
     contentPadding:PaddingValues,
     modifier: Modifier = Modifier,
-    viewModel: SectionScreenViewModel
+    viewModel: SectionScreenViewModel,
+    navigateToChatScreen: (String) -> Unit
 ) {
     LazyVerticalGrid(
         modifier=modifier,
@@ -74,7 +79,8 @@ fun SectionScreenBody(
         itemsIndexed(viewModel.decodedCourseList) {index,course->
             SkillCard(
                 courseName =course,
-                shape = CircleShape
+                shape = CircleShape,
+                onClick = {navigateToChatScreen(course)}
             )
         }
     }
@@ -83,24 +89,23 @@ fun SectionScreenBody(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DefaultAppBar(
+    modifier: Modifier= Modifier,
     title:String="Title",
-    scrollBehavior: TopAppBarScrollBehavior
+    scrollBehavior: TopAppBarScrollBehavior,
+    onNavIconClick:()-> Unit,
+    colors: TopAppBarColors= TopAppBarDefaults.centerAlignedTopAppBarColors()
 ) {
     CenterAlignedTopAppBar(
+        modifier=modifier,
+        colors = colors,
         scrollBehavior = scrollBehavior,
         title={Text(text=title)},
         navigationIcon = {
             IconButton(
-                onClick = {}
+                onClick = onNavIconClick
             ) {
                 Icon(imageVector = Icons.Default.ArrowBack, contentDescription = null)
             }
         }
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun SectionScreenPreview() {
-    SectionScreen()
 }

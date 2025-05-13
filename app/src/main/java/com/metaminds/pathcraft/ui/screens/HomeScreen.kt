@@ -1,7 +1,6 @@
 package com.metaminds.pathcraft.ui.screens
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -40,10 +40,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -53,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,9 +82,14 @@ object HomeScreenNavigationDestination : NavigationDestination {
 fun HomeScreen(
     modifier: Modifier = Modifier,
     navigateToSectionScreen:(Int,String)-> Unit,
-    navigateToChatScreen:()-> Unit,
+    navigateToChatScreen:(String?)-> Unit,
+    navigateToLoginScreen:()-> Unit,
+    navigateToCourseScreen: (String) -> Unit,
     viewModel: HomeScreenViewModel = viewModel(factory= AppViewModelProvider.factory)
 ) {
+    LaunchedEffect(Unit) {
+        viewModel.refreshData()
+    }
     val uiState=viewModel.homeUiState
     Surface(
         modifier = modifier.padding(WindowInsets.systemBars.asPaddingValues()),
@@ -93,17 +101,25 @@ fun HomeScreen(
             HomeScreenHeader(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 300.dp)
-                    ,
+                    .heightIn(min = 300.dp),
                 onProfileClick = { },
-                navigateToChatScreen={navigateToChatScreen()},
-                greetingMessage = stringResource(viewModel.getGreeting(),viewModel.auth.currentUser?.displayName.toString())
+                navigateToChatScreen={navigateToChatScreen(null)},
+                greetingMessage = stringResource(viewModel.getGreeting(),viewModel.auth.currentUser?.displayName.toString().replaceFirstChar { it.uppercaseChar() }),
+                onLogOut = {
+                    viewModel.auth.signOut()
+                    navigateToLoginScreen()
+                }
             )
             HomeScreenBody(
                 navigateToSectionScreen={title,courseList->
                     navigateToSectionScreen(title,courseList) },
                 uiState = uiState,
-                navigateToChatScreen = {navigateToChatScreen()}
+                navigateToChatScreen = {
+                    navigateToChatScreen(it)
+                },
+                navigateToCourseScreen = {
+                    navigateToCourseScreen(it)
+                }
             )
 
         }
@@ -115,7 +131,8 @@ fun HomeScreenBody(
     modifier: Modifier = Modifier,
     navigateToSectionScreen: (title:Int, courseList:String) -> Unit,
     uiState: HomeUiState,
-    navigateToChatScreen: () -> Unit
+    navigateToChatScreen: (String?) -> Unit,
+    navigateToCourseScreen:(String)-> Unit
 ) {
     val context = LocalContext.current
     LazyColumn(
@@ -131,7 +148,6 @@ fun HomeScreenBody(
             }
             is HomeUiState.Error -> {
                 Toast.makeText(context,uiState.error,Toast.LENGTH_SHORT).show()
-                Log.d("msg",uiState.error)
             }
             is HomeUiState.Success -> {
                 item {
@@ -139,6 +155,9 @@ fun HomeScreenBody(
                         sectionName = "Featured for you",
                         navigateToSectionScreen = { navigateToSectionScreen(R.string.featured_skills,Uri.encode(Gson().toJson(uiState.featuredTopics))) },
                         courseList = uiState.featuredTopics,
+                        navigateToChatScreen = {
+                            navigateToChatScreen(it)
+                        }
                     )
                 }
                 item{
@@ -146,7 +165,8 @@ fun HomeScreenBody(
                         sectionName = "Trending Skills",
                         navigateToSectionScreen = {navigateToSectionScreen(R.string.trending_skills,
                             Uri.encode(Gson().toJson(uiState.trendingTopics)))},
-                        courseList = uiState.trendingTopics
+                        courseList = uiState.trendingTopics,
+                        navigateToChatScreen = navigateToChatScreen
                     )
                 }
                 item{
@@ -154,7 +174,11 @@ fun HomeScreenBody(
                         sectionName="Your paths",
                         navigateToSectionScreen = {},
                         courseList = uiState.userTopics,
-                        navigateToChatScreen = navigateToChatScreen
+                        navigateToChatScreen = {
+                            it?.let {
+                                navigateToCourseScreen(it)
+                            }?: navigateToChatScreen(null)
+                        }
                     )
                 }
             }
@@ -169,7 +193,7 @@ fun SectionBody(
     sectionName: String,
     navigateToSectionScreen: () -> Unit,
     courseList: List<String>,
-    navigateToChatScreen: () -> Unit={}
+    navigateToChatScreen: (String?) -> Unit={}
 ) {
     Column(
         modifier=modifier
@@ -208,10 +232,14 @@ fun SectionBody(
                     .border(width = 2.dp, color = MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(10.dp))
                     .background(color = MaterialTheme.colorScheme.surfaceVariant)
                     ,
-                navigateToChatScreen=navigateToChatScreen
+                navigateToChatScreen= {navigateToChatScreen(null)}
             )
         else
-            RowBody(contentPaddingValues = PaddingValues(horizontal = 10.dp), courseList =courseList)
+            RowBody(
+                contentPaddingValues = PaddingValues(horizontal = 10.dp),
+                courseList = courseList,
+                onItemClick = navigateToChatScreen,
+            )
     }
 }
 
@@ -248,7 +276,8 @@ fun ShowEmptySection(
 fun RowBody(
     modifier: Modifier = Modifier,
     contentPaddingValues: PaddingValues,
-    courseList:List<String>
+    courseList:List<String>,
+    onItemClick:(String)-> Unit
 ) {
         LazyRow(
             modifier = modifier.fillMaxHeight(),
@@ -256,7 +285,7 @@ fun RowBody(
             verticalAlignment = Alignment.CenterVertically,
             contentPadding = contentPaddingValues
         ) {
-            items(count = 5) {
+            items(count = if(courseList.size<5) courseList.size else 5) {
                 SkillCard(
                     modifier = Modifier.sizeIn(minWidth = 180.dp, minHeight = 80.dp),
                     courseName = courseList[it],
@@ -265,7 +294,10 @@ fun RowBody(
                         topEnd = 0.dp,
                         bottomStart = 0.dp,
                         bottomEnd = 15.dp
-                    )
+                    ),
+                    onClick = {
+                        onItemClick(courseList[it])
+                    }
                 )
             }
     }
@@ -275,9 +307,11 @@ fun RowBody(
 fun SkillCard(
     modifier: Modifier = Modifier,
     courseName: String="name",
-    shape: Shape
+    shape: Shape,
+    onClick: () -> Unit
     ) {
     OutlinedCard(
+        onClick =onClick,
         modifier=Modifier.border(width = 2.dp,shape= shape, color = MaterialTheme.colorScheme.primary),
         elevation = CardDefaults.cardElevation(2.dp),
         shape = shape,
@@ -305,7 +339,8 @@ fun HomeScreenHeader(
     modifier: Modifier = Modifier,
     onProfileClick:()-> Unit,
     navigateToChatScreen: () -> Unit,
-    greetingMessage: String
+    greetingMessage: String,
+    onLogOut:()-> Unit
 ) {
     Box(
         modifier = modifier
@@ -325,25 +360,36 @@ fun HomeScreenHeader(
                 text = greetingMessage,
                 modifier = Modifier.padding(start = 10.dp),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start
             )
         }
-        ActionButton(
-            modifier = Modifier
+        Row(
+            modifier=Modifier
                 .align(Alignment.TopEnd)
-                .padding(10.dp)
-                .size(45.dp)
-                .border(
-                    width = 2.dp,
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.secondary
-                ),
-            onClick = onProfileClick,
-            icon = Icons.Filled.Person,
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            tint = MaterialTheme.colorScheme.inverseSurface,
-            iconSize = 30.dp
-        )
+                .padding(PaddingValues(vertical = 5.dp, horizontal = 10.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ActionButton(
+                modifier = Modifier
+                    .size(50.dp),
+                onClick = onProfileClick,
+                icon = Icons.Filled.Person,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                iconSize = 30.dp
+            )
+            ActionButton(
+                modifier = Modifier
+                    .size(50.dp),
+                onClick = onLogOut,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                iconSize = 30.dp,
+                painter = painterResource(R.drawable.baseline_exit_to_app_24)
+            )
+        }
 
         ShowRobotAnimation(modifier = Modifier
             .clickable(
