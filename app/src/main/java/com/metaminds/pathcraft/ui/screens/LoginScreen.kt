@@ -62,6 +62,8 @@ import com.metaminds.pathcraft.ui.viewModels.LoginScreenUiState
 import com.metaminds.pathcraft.ui.viewModels.LoginScreenViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.metaminds.pathcraft.LOGIN_SCREEN_TITLE
 import kotlinx.coroutines.delay
@@ -323,10 +325,15 @@ fun BackgroundImage(
 @Composable
 fun ShowLoadingScreen(modifier: Modifier = Modifier) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
+    val progress by animateLottieCompositionAsState(
+        composition=composition,
+        iterations = LottieConstants.IterateForever
+    )
     Dialog(onDismissRequest = { }) {
         LottieAnimation(
             modifier=modifier,
             composition = composition,
+            progress = progress
         )
     }
 

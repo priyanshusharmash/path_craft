@@ -12,6 +12,7 @@ interface GeminiRepository {
     suspend fun generateSubTopics(): String
     suspend fun generateFeaturedTopics(): List<String>
     suspend fun generateTopTrendingSkills():List<String>
+    suspend fun generateTopicContent(topic:String,subTopic: String): String
 }
 
 data class MessageModel(

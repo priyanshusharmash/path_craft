@@ -10,6 +10,7 @@ import com.metaminds.pathcraft.ui.viewModels.ChatScreenViewModel
 import com.metaminds.pathcraft.ui.viewModels.CourseScreenViewModel
 import com.metaminds.pathcraft.ui.viewModels.HomeScreenViewModel
 import com.metaminds.pathcraft.ui.viewModels.LoginScreenViewModel
+import com.metaminds.pathcraft.ui.viewModels.NotesContentScreenViewModel
 import com.metaminds.pathcraft.ui.viewModels.SectionScreenViewModel
 
 
@@ -29,6 +30,9 @@ object AppViewModelProvider {
         }
         initializer {
             CourseScreenViewModel(repository = pathCraftApplication().container.repository, savedStateHandle = this.createSavedStateHandle())
+        }
+        initializer {
+            NotesContentScreenViewModel(repository = pathCraftApplication().container.repository, savedStateHandle = this.createSavedStateHandle())
         }
     }
 }

@@ -86,6 +86,8 @@ dependencies {
 
     implementation(libs.accompanist.pager)
 
+    implementation(libs.core)
+
 
 
 }

@@ -1,6 +1,5 @@
 package com.metaminds.pathcraft.ui.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -171,9 +170,7 @@ fun ChatColumn(
         }
         itemsIndexed(items = messageList) { index, messageModel ->
             if (index == messageList.size - 4 && viewModel.topicList.isNotEmpty()) {
-                RoadMapChart(
-                    topicList = viewModel.topicList
-                )
+                RoadMapChart()
             }
             if (messageModel.isShown) {
                 ChatBox(

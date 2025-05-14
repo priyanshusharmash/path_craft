@@ -16,10 +16,12 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
         private set
     val auth=repository.getAuth()
 
+    init {
+        auth.currentUser?.reload()
+    }
 
     fun refreshData(){
         auth.currentUser?.reload()
-
         homeUiState= HomeUiState.Loading
         viewModelScope.launch{
             homeUiState = try {

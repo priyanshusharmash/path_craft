@@ -1,7 +1,5 @@
 package com.metaminds.pathcraft.ui.viewModels
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,23 +11,28 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.ai.client.generativeai.Chat
 import com.metaminds.pathcraft.data.AppRepository
 import com.metaminds.pathcraft.data.MessageModel
 import com.metaminds.pathcraft.ui.screens.ChatScreenNavigationDestination
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ChatScreenViewModel(
     private val repository: AppRepository,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     val messageList = repository.history
     var topicList: List<String> = listOf()
     var chatState: ChatStatus = ChatStatus.GREET
     var dataFetchingState: DataFetchingState by mutableStateOf(DataFetchingState.Loading)
     var courseName: String = savedStateHandle[ChatScreenNavigationDestination.COURSE] ?: ""
+    private val _delayedList = MutableStateFlow<List<String>>(emptyList()) 
+    val delayedList = _delayedList.asStateFlow()
+
+
 
 
     var checkpoints by mutableStateOf("")
@@ -71,11 +74,11 @@ class ChatScreenViewModel(
     fun onBackPressed(){
         viewModelScope.cancel()
         if(chatState== ChatStatus.End) {
-            repository.saveNewCourse(
-                courseName = courseName, courseCheckpointList = parseTopics(
-                    input = checkpoints
+                repository.saveNewCourse(
+                    courseName = courseName, courseCheckpointList = parseTopics(
+                        input = checkpoints
+                    )
                 )
-            )
         }
     }
 
@@ -107,8 +110,12 @@ class ChatScreenViewModel(
         val response = repository.generateRoadmap(topic)
         repository.history.add(MessageModel(message = response, role = "model", isShown = false))
         topicList = response.split("::")
+        _delayedList.value = emptyList()
         dataFetchingState = DataFetchingState.Success
-
+        for (item in topicList) {
+            delay(300)
+            _delayedList.value = _delayedList.value + item
+        }
     }
 
     private suspend fun generateSubTopics() {
@@ -204,6 +211,6 @@ enum class ChatStatus {
 
 data class CourseCheckpoint(
     val checkpoint:String,
-    var subTopics:List<String>
+    var subTopics:List<String>,
 )
 

@@ -11,4 +11,6 @@ interface FirebaseRepository {
     fun logInWithEmailPassword(email:String,password:String,callback: (Boolean, String?) -> Unit)
     fun saveNewCourse(courseName:String,courseCheckpointList: List<CourseCheckpoint>)
     suspend fun getCourseName():List<String>
+    suspend fun saveContentNotes(courseName:String,topic: String,subTopic: String,content: String)
+    suspend fun getContentNotes(courseName: String, topic: String, subTopic: String): String?
 }

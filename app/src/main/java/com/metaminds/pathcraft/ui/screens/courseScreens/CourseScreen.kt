@@ -1,5 +1,7 @@
 package com.metaminds.pathcraft.ui.screens.courseScreens
 
+import android.annotation.SuppressLint
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,10 +15,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -26,7 +31,10 @@ import com.metaminds.pathcraft.ui.AppViewModelProvider
 import com.metaminds.pathcraft.ui.navigation.CourseScreenNavigationGraph
 import com.metaminds.pathcraft.ui.navigation.NavigationDestination
 import com.metaminds.pathcraft.ui.screens.DefaultAppBar
+import com.metaminds.pathcraft.ui.viewModels.CourseFetchStatus
 import com.metaminds.pathcraft.ui.viewModels.CourseScreenViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 object CourseScreenNavigationDestination: NavigationDestination{
     override val titleRes: Int = R.string.your_learning
@@ -35,11 +43,13 @@ object CourseScreenNavigationDestination: NavigationDestination{
     val routeWithArgs = "$route/{$COURSE}"
 }
 
+@SuppressLint("FlowOperatorInvokedInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourseScreen(
     viewModel: CourseScreenViewModel= viewModel(factory = AppViewModelProvider.factory),
     onBackPressed: () -> Unit,
+    navigateToNotesContentScreen:(String,String,String)-> Unit
 ) {
     BackHandler {
         onBackPressed()
@@ -47,15 +57,25 @@ fun CourseScreen(
     val navController = rememberNavController()
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val scrollBehavior= TopAppBarDefaults.pinnedScrollBehavior()
+    var previousTab by remember { mutableStateOf("") }
+    LaunchedEffect(selectedTabIndex) {
+        viewModel.courseUiState= CourseFetchStatus.Waiting
+        delay(100)
+        viewModel.refreshState()
+    }
+
     Scaffold(
         topBar = {
             CourseScreenTopBar(
                 scrollBehavior =scrollBehavior,
-                onTabChange = {index,route->
+                onTabChange = {index,route,previousTabRoute->
+                    previousTab=previousTabRoute
+                    if(selectedTabIndex!=index){
+                        navController.navigate(route){
+                            popUpTo(0)
+                        }}
                     selectedTabIndex = index
-                    navController.navigate(route){
-                        popUpTo(0)
-                    }
+
                 },
                 selectedTabIndex = selectedTabIndex,
                 onBackPressed = {onBackPressed()},
@@ -65,7 +85,11 @@ fun CourseScreen(
         CourseScreenNavigationGraph(
             modifier = Modifier.padding(contentPadding),
             navController = navController,
-            courseScreenViewModel = viewModel
+            courseScreenViewModel = viewModel,
+            navigateToNotesContentScreen={topic,subtopic->
+                navigateToNotesContentScreen(viewModel.title,topic,subtopic)
+            },
+            previousDestination = previousTab
         )
     }
 }
@@ -76,7 +100,7 @@ fun CourseScreen(
 fun CourseScreenTopBar(
     modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior,
-    onTabChange: (Int, String) -> Unit,
+    onTabChange: (Int, String, String) -> Unit,
     selectedTabIndex: Int,
     actionBarTitle: String,
     onBackPressed:()-> Unit
@@ -95,7 +119,7 @@ fun CourseScreenTopBar(
             )
         )
         CourseScreenNavigationBar(
-            onTabChange ={index,route-> onTabChange(index,route)},
+            onTabChange ={index,route,previousRoute-> onTabChange(index,route,previousRoute)},
             selectedTabIndex = selectedTabIndex,
         )
     }
@@ -104,14 +128,18 @@ fun CourseScreenTopBar(
 @Composable
 fun CourseScreenNavigationBar(
     selectedTabIndex: Int,
-    onTabChange:(Int,String)-> Unit
+    onTabChange:(Int, String, String)-> Unit
 ) {
     TabRow(selectedTabIndex = selectedTabIndex) {
+        var previousTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
         TabItems.entries.forEachIndexed { index, destination ->
+
             Tab(
                 selected = selectedTabIndex == index,
                 onClick = {
-                    onTabChange(index,destination.route)
+                    previousTabIndex=selectedTabIndex
+                    onTabChange(index,destination.route, TabItems.entries[previousTabIndex].route)
+
                 },
                 text = { Text(destination.tabName.replaceFirstChar { it.uppercase() }) }
             )

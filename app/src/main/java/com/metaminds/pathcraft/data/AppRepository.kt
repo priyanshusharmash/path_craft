@@ -1,7 +1,6 @@
 package com.metaminds.pathcraft.data
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.GenerativeModel
@@ -10,7 +9,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.metaminds.pathcraft.network.UnsplashSearchResponse
 import com.metaminds.pathcraft.network.UpslashApiService
-import com.metaminds.pathcraft.network.UpslashPhotos
+import com.metaminds.pathcraft.network.YoutubeApiService
 import com.metaminds.pathcraft.ui.viewModels.CourseCheckpoint
 import kotlinx.coroutines.tasks.await
 import java.util.Properties
@@ -27,10 +26,11 @@ class AppRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
     private val context: Context,
-    private val upslashApiService: UpslashApiService
+    private val upslashApiService: UpslashApiService,
+    private val youtubeApiService: YoutubeApiService
 ) : GeminiRepository, FirebaseRepository, UpshashApiRepository {
     override val generativeModel: GenerativeModel = GenerativeModel(
-        modelName = "gemini-2.0-flash",
+        modelName = "gemini-1.5-flash",
         apiKey = getApiKey(context)
     )
     override val history: MutableList<MessageModel> = mutableStateListOf()
@@ -120,10 +120,49 @@ class AppRepository(
         return response.text.toString().split("::")
     }
 
+    override suspend fun generateTopicContent(topic:String,subTopic: String): String{
+        val response=chat.sendMessage(
+            "I want to learn $subTopic in respect to $topic " +
+                    "so teach me $subTopic " +
+                    "instructions- i am beginner, generate only content not any other thing other than the content, " +
+                    "teach me in a book language and as a professional master of this topic ," +
+                    "do not display any table"
+        )
+        return response.text.toString()
+    }
+
+    override suspend fun getContentNotes(courseName: String, topic: String, subTopic: String): String? {
+        val documentSnapshot = firestore
+            .collection("users")
+            .document(auth.currentUser!!.uid)
+            .collection("learning")
+            .document(courseName.replace('/','_'))
+            .collection(topic.replace('/','_'))
+            .document(subTopic.replace('/','_'))
+            .get()
+            .await()
+        return documentSnapshot.getString("content")
+    }
+
+    override suspend fun saveContentNotes(courseName:String,topic: String,subTopic: String,content: String) {
+        val data = mapOf(
+            "content" to content
+        )
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(courseName.replace('/','_'))
+            .collection(topic.replace('/','_'))
+            .document(subTopic.replace('/','_'))
+            .set(data)
+
+    }
+
     override suspend fun getUpshashPhoto(query: String): UnsplashSearchResponse =
         upslashApiService.searchPhotos(query)
 
-    override fun saveNewCourse(courseName: String,courseCheckpointList:List<CourseCheckpoint>) {
+    override fun saveNewCourse(
+        courseName: String,
+        courseCheckpointList: List<CourseCheckpoint>
+    ) {
         val formattedCheckpoints = courseCheckpointList.map { checkpoint ->
             mapOf(
                 "checkpoint" to checkpoint.checkpoint,
@@ -135,7 +174,7 @@ class AppRepository(
             "courseCheckpointList" to formattedCheckpoints
         )
         firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
-            .document(courseName)
+            .document(courseName.replace('/','_'))
             .set(course)
     }
 
@@ -143,7 +182,7 @@ class AppRepository(
         val documentSnapshot = firestore.collection("users")
             .document(auth.currentUser!!.uid)
             .collection("learning")
-            .document(courseName)
+            .document(courseName.replace('/','_'))
             .get()
             .await()
         if (!documentSnapshot.exists()) {
@@ -164,12 +203,6 @@ class AppRepository(
         }
     }
 
-
-
-
-
-
-
     override suspend fun getCourseName(): List<String> {
         return try {
             val querySnapshot = firestore.collection("users")
@@ -183,6 +216,39 @@ class AppRepository(
         }
     }
 
+    private suspend fun getYoutubeVideoLinks(query: String): String{
+        val searchResponse = youtubeApiService.searchVideos(query = "full $query in one shot from beginner to advanced", maxResults = 5, apiKey = "AIzaSyDhrIwDSyTdtzCSlGx-u66j0YfMCttfKBA")
+        val videoIds = searchResponse.items.mapNotNull { it.id.videoId }
+        val statusResponse = youtubeApiService.getVideoDetails(
+            ids = videoIds.joinToString(","),
+            apiKey ="AIzaSyDhrIwDSyTdtzCSlGx-u66j0YfMCttfKBA"
+        )
+        val publicAndEmbeddableIds = statusResponse.items.filter {
+            it.status.privacyStatus == "public" && it.status.embeddable
+        }.map { it.id }
+        return publicAndEmbeddableIds[0]
+
+    }
+
+    suspend fun saveYoutubeVideoId(courseName:String): String{
+        val id = getYoutubeVideoLinks(courseName)
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(courseName.replace('/','_'))
+            .update(mapOf(
+                "youtubeVideoId" to id
+            ))
+        return id
+    }
+
+    suspend fun fetchYoutubeVideoLink(courseName: String): String?{
+        val documentSnapshot = firestore.collection("users")
+            .document(auth.currentUser!!.uid)
+            .collection("learning")
+            .document(courseName.replace('/','_'))
+            .get()
+            .await()
+        return if(documentSnapshot.contains("youtubeVideoId"))documentSnapshot.get("youtubeVideoId").toString() else null
+    }
 
 
 }

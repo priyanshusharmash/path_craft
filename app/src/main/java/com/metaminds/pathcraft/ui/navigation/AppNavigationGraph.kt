@@ -1,6 +1,11 @@
 package com.metaminds.pathcraft.ui.navigation
 
 import android.net.Uri
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +29,8 @@ import com.metaminds.pathcraft.ui.screens.SectionScreen
 import com.metaminds.pathcraft.ui.screens.SectionScreenNavigationDestination
 import com.metaminds.pathcraft.ui.screens.SignUpScreen
 import com.metaminds.pathcraft.ui.screens.SignUpScreenNavigationDestination
+import com.metaminds.pathcraft.ui.screens.NotesContentScreen
+import com.metaminds.pathcraft.ui.screens.NotesContentScreenNavigationDestination
 import com.metaminds.pathcraft.ui.viewModels.HomeScreenViewModel
 
 @Composable
@@ -109,9 +116,31 @@ fun AppNavigationGraph(
         composable(route = CourseScreenNavigationDestination.routeWithArgs,
             arguments = listOf(
                 navArgument (CourseScreenNavigationDestination.COURSE){type= NavType.StringType }
-            )){
+            ),
+            enterTransition = {fadeIn(animationSpec = tween(300))},
+            exitTransition = {fadeOut(animationSpec = tween(300))}
+            ){
             CourseScreen(
-                onBackPressed = {navController.popBackStack()}
+                onBackPressed = {navController.popBackStack()},
+                navigateToNotesContentScreen = {course,topic,subtopic->
+                    navController.navigate("${NotesContentScreenNavigationDestination.route}/${Uri.encode(course)}/${Uri.encode(topic)}/${Uri.encode(subtopic)}")
+                }
+            )
+        }
+
+        composable (route = NotesContentScreenNavigationDestination.routeWithArgs,
+            arguments = listOf(
+                navArgument(NotesContentScreenNavigationDestination.COURSE_NAME) {type = NavType.StringType},
+                navArgument(NotesContentScreenNavigationDestination.TOPIC){type= NavType.StringType},
+                navArgument (NotesContentScreenNavigationDestination.SUBTOPIC){ type= NavType.StringType }
+            ),
+            enterTransition = { slideInHorizontally(initialOffsetX = {it}, animationSpec = tween(300))},
+            exitTransition = { slideOutHorizontally(targetOffsetX = {it}, animationSpec = tween(300))}
+            ){
+            NotesContentScreen(
+                onBackPressed = {
+                    navController.popBackStack()
+                }
             )
         }
     }

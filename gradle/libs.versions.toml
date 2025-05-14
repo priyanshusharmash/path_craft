@@ -5,6 +5,7 @@ animationGraphics = "latest_version"
 coilCompose = "3.1.0"
 coilComposeVersion = "2.4.0"
 coilKtCoilCompose = "2.7.0"
+core = "11.1.0"
 firebaseBom = "33.13.0"
 generativeai = "0.9.0"
 gson = "2.10.1"
@@ -36,6 +37,7 @@ androidx-navigation-compose = { module = "androidx.navigation:navigation-compose
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 coil-compose-v240 = { module = "io.coil-kt:coil-compose", version.ref = "coilComposeVersion" }
 coil-compose-v270 = { module = "io.coil-kt:coil-compose", version.ref = "coilKtCoilCompose" }
+core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
