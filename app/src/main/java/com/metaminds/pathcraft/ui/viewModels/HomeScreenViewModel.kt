@@ -15,7 +15,6 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
     var homeUiState: HomeUiState by mutableStateOf(HomeUiState.Loading)
         private set
     val auth=repository.getAuth()
-
     init {
         auth.currentUser?.reload()
     }
@@ -28,12 +27,26 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
                 HomeUiState.Success(
                     featuredTopics = repository.generateFeaturedTopics(),
                     trendingTopics = repository.generateTopTrendingSkills(),
-                    userTopics = repository.getCourseName()
+                    userTopics = fillUserTopics()
                 )
             }catch (e:Exception){
                 HomeUiState.Error(error= e.message.toString())
             }
+
         }
+    }
+    private suspend fun fillUserTopics(): List<UserTopics>{
+        val userTopics = repository.getCourseName()
+        val userTopicsFinalList=mutableListOf<UserTopics>()
+        userTopics.forEach { topic->
+            userTopicsFinalList.add(
+                UserTopics(
+                    topicName=topic,
+                    imageLink = repository.getSavedCourseImage(topic)?: repository.saveUnSplashImageUrl(topic)
+                )
+            )
+        }
+        return userTopicsFinalList
     }
 
     fun getGreeting(): Int {
@@ -51,5 +64,9 @@ class HomeScreenViewModel(private val repository: AppRepository):ViewModel() {
 sealed interface HomeUiState{
     class Error(val error: String): HomeUiState
     object Loading: HomeUiState
-    class Success(val featuredTopics:List<String>,val trendingTopics:List<String>,val userTopics: List<String>): HomeUiState
+    class Success(val featuredTopics:List<String>,val trendingTopics:List<String>,val userTopics: List<UserTopics>): HomeUiState
 }
+data class UserTopics(
+    val topicName: String,
+    val imageLink: String
+)

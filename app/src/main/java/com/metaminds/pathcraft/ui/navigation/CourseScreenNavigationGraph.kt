@@ -5,12 +5,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.metaminds.pathcraft.ui.screens.courseScreens.CourseBooksResourcesTab
+import com.metaminds.pathcraft.ui.screens.courseScreens.CourseResourcesTab
 import com.metaminds.pathcraft.ui.screens.courseScreens.CourseBooksResourcesTabNavigationDestination
 import com.metaminds.pathcraft.ui.screens.courseScreens.CourseVideosResourcesTab
 import com.metaminds.pathcraft.ui.screens.courseScreens.CourseVideosResourcesTabNavigationDestination
@@ -102,7 +101,7 @@ fun CourseScreenNavigationGraph(
                 )
             }
         ) {
-            CourseBooksResourcesTab()
+            CourseResourcesTab(viewModel=courseScreenViewModel)
         }
     }
 }

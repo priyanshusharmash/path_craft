@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,21 +46,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -152,7 +153,7 @@ fun HomeScreenBody(
             is HomeUiState.Success -> {
                 item {
                     SectionBody(
-                        sectionName = "Featured for you",
+                        sectionName = stringResource(R.string.featured_skills),
                         navigateToSectionScreen = { navigateToSectionScreen(R.string.featured_skills,Uri.encode(Gson().toJson(uiState.featuredTopics))) },
                         courseList = uiState.featuredTopics,
                         navigateToChatScreen = {
@@ -162,30 +163,147 @@ fun HomeScreenBody(
                 }
                 item{
                     SectionBody(
-                        sectionName = "Trending Skills",
+                        sectionName = stringResource(R.string.trending_skills),
                         navigateToSectionScreen = {navigateToSectionScreen(R.string.trending_skills,
                             Uri.encode(Gson().toJson(uiState.trendingTopics)))},
-                        courseList = uiState.trendingTopics,
+                        courseList = uiState.trendingTopics.shuffled(),
                         navigateToChatScreen = navigateToChatScreen
                     )
                 }
                 item{
-                    SectionBody(
-                        sectionName="Your paths",
-                        navigateToSectionScreen = {},
-                        courseList = uiState.userTopics,
-                        navigateToChatScreen = {
-                            it?.let {
-                                navigateToCourseScreen(it)
-                            }?: navigateToChatScreen(null)
+                    if(uiState.userTopics.isEmpty()){
+                        ShowEmptySection(
+                            modifier=Modifier
+                                .heightIn(130.dp)
+                                .padding(horizontal = 10.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .background(color = MaterialTheme.colorScheme.surfaceVariant)
+                            ,
+                            navigateToChatScreen= {navigateToChatScreen(null)}
+                        )
+                    }else if(uiState.userTopics[uiState.userTopics.size-1].imageLink.isEmpty()){
+                        val courseList = remember { mutableListOf("")}
+                        uiState.userTopics.forEachIndexed { index,topic->
+                            courseList.add(topic.topicName)
                         }
-                    )
+                        SectionBody(
+                            sectionName=stringResource(R.string.your_learning),
+                            navigateToSectionScreen = {},
+                            courseList = courseList,
+                            navigateToChatScreen = {
+                                it?.let {
+                                    navigateToCourseScreen(it)
+                                }?: navigateToChatScreen(null)
+                            }
+                        )
+                    }else{
+                        UserCoursesSection(
+                            uiState=uiState,
+                            sectionName = stringResource(R.string.your_learning),
+                            onClick = {navigateToCourseScreen(it)}
+                        )
+                    }
+
                 }
             }
         }
 
     }
 }
+
+
+@Composable
+fun UserCoursesSection(
+    modifier: Modifier = Modifier,
+    uiState: HomeUiState.Success,
+    sectionName:String,
+    onClick: (String) -> Unit
+) {
+       Column (
+           modifier=modifier
+       ){
+           Box (
+               modifier=Modifier
+                   .padding(PaddingValues(horizontal = 5.dp))
+                   .clip(CircleShape)
+                   .fillMaxWidth()
+                   .background(color = MaterialTheme.colorScheme.primaryContainer),
+               contentAlignment = Alignment.CenterStart
+           ){
+               Text(
+                   text=sectionName,
+                   modifier=Modifier.padding(horizontal = 15.dp),
+                   style = MaterialTheme.typography.titleMedium,
+                   color = MaterialTheme.colorScheme.onPrimaryContainer,
+               )
+               ActionButton(
+                   modifier = Modifier
+                       .align(Alignment.CenterEnd)
+                       .padding(end = 10.dp),
+                   onClick = {  },
+                   painter = painterResource(R.drawable.outline_arrow_right_alt_24),
+                   containerColor = MaterialTheme.colorScheme.primaryContainer,
+                   tint = MaterialTheme.colorScheme.primaryContainer,
+                   iconSize = 25.dp
+               )
+           }
+           Spacer(Modifier.height(15.dp))
+          uiState.userTopics.forEachIndexed { index,topic->
+              UserTopicCard(
+                  topicName = topic.topicName,
+                  topicImageUrl = topic.imageLink,
+                  onClick = onClick,
+                  modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                  color = CardDefaults.outlinedCardColors(
+                      containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                  ),
+                  imageModifier = Modifier.size(100.dp)
+              )
+          }
+       }
+}
+
+@Composable
+fun UserTopicCard(
+    modifier: Modifier = Modifier,
+    topicName:String,
+    topicImageUrl: String,
+    onClick: (String) -> Unit,
+    color: CardColors,
+    imageModifier: Modifier= Modifier
+) {
+    OutlinedCard(
+        elevation = CardDefaults.outlinedCardElevation(5.dp),
+        modifier=modifier,
+        onClick = {onClick(topicName)},
+        colors = color
+    ){
+       Row(
+           verticalAlignment = Alignment.CenterVertically,
+           horizontalArrangement = Arrangement.SpaceBetween
+       ){
+           AsyncImage(
+               model = topicImageUrl,
+               contentDescription = null,
+               modifier=imageModifier,
+               contentScale = ContentScale.Crop
+           )
+           Text(
+               text=topicName.replaceFirstChar { it.uppercaseChar() },
+               style = MaterialTheme.typography.bodyLarge,
+               modifier=Modifier.weight(1f).padding(horizontal = 10.dp),
+           )
+       }
+    }
+
+}
+
+
 
 @Composable
 fun SectionBody(
@@ -224,17 +342,6 @@ fun SectionBody(
             )
         }
         Spacer(Modifier.height(15.dp))
-        if(courseList.isEmpty())
-            ShowEmptySection(
-                modifier=Modifier.heightIn(130.dp)
-                    .padding(horizontal = 10.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(width = 2.dp, color = MaterialTheme.colorScheme.secondary, shape = RoundedCornerShape(10.dp))
-                    .background(color = MaterialTheme.colorScheme.surfaceVariant)
-                    ,
-                navigateToChatScreen= {navigateToChatScreen(null)}
-            )
-        else
             RowBody(
                 contentPaddingValues = PaddingValues(horizontal = 10.dp),
                 courseList = courseList,
@@ -393,7 +500,7 @@ fun HomeScreenHeader(
 
         ShowRobotAnimation(modifier = Modifier
             .clickable(
-                interactionSource = remember {MutableInteractionSource()},
+                interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { navigateToChatScreen() }
             .size(250.dp)

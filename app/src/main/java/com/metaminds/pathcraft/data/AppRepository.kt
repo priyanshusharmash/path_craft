@@ -1,6 +1,7 @@
 package com.metaminds.pathcraft.data
 
 import android.content.Context
+import androidx.compose.animation.core.snap
 import androidx.compose.runtime.mutableStateListOf
 import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.GenerativeModel
@@ -14,12 +15,33 @@ import com.metaminds.pathcraft.ui.viewModels.CourseCheckpoint
 import kotlinx.coroutines.tasks.await
 import java.util.Properties
 
-private fun getApiKey(context: Context): String {
+private fun getGeminiApiKey(context: Context): String {
     val properties = Properties()
     context.assets.open("apikeys.properties").use { inputStream ->
         properties.load(inputStream)
     }
     return properties.getProperty("API_KEY") ?: throw Exception("API_KEY not found")
+}
+private fun getYoutubeApiKey1(context: Context): String {
+    val properties = Properties()
+    context.assets.open("apikeys.properties").use { inputStream ->
+        properties.load(inputStream)
+    }
+    return properties.getProperty("YOUTUBE_API_KEY[1]") ?: throw Exception("API_KEY not found")
+}
+private fun getYoutubeApiKey2(context: Context): String {
+    val properties = Properties()
+    context.assets.open("apikeys.properties").use { inputStream ->
+        properties.load(inputStream)
+    }
+    return properties.getProperty("YOUTUBE_API_KEY[2]") ?: throw Exception("API_KEY not found")
+}
+private fun getUnsplashApiKey(context: Context): String {
+    val properties = Properties()
+    context.assets.open("apikeys.properties").use { inputStream ->
+        properties.load(inputStream)
+    }
+    return properties.getProperty("UNSPLASH_API_KEY") ?: throw Exception("API_KEY not found")
 }
 
 class AppRepository(
@@ -31,7 +53,7 @@ class AppRepository(
 ) : GeminiRepository, FirebaseRepository, UpshashApiRepository {
     override val generativeModel: GenerativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = getApiKey(context)
+        apiKey = getGeminiApiKey(context)
     )
     override val history: MutableList<MessageModel> = mutableStateListOf()
     override val chat: Chat = generativeModel.startChat(
@@ -157,7 +179,7 @@ class AppRepository(
     }
 
     override suspend fun getUpshashPhoto(query: String): UnsplashSearchResponse =
-        upslashApiService.searchPhotos(query)
+        upslashApiService.searchPhotos("$query in technology", clientId = getUnsplashApiKey(context))
 
     override fun saveNewCourse(
         courseName: String,
@@ -217,11 +239,11 @@ class AppRepository(
     }
 
     private suspend fun getYoutubeVideoLinks(query: String): String{
-        val searchResponse = youtubeApiService.searchVideos(query = "full $query in one shot from beginner to advanced", maxResults = 5, apiKey = "AIzaSyDhrIwDSyTdtzCSlGx-u66j0YfMCttfKBA")
+        val searchResponse = youtubeApiService.searchVideos(query = "full $query in one shot from beginner to advanced", maxResults = 5, apiKey =getYoutubeApiKey1(context))
         val videoIds = searchResponse.items.mapNotNull { it.id.videoId }
         val statusResponse = youtubeApiService.getVideoDetails(
             ids = videoIds.joinToString(","),
-            apiKey ="AIzaSyDhrIwDSyTdtzCSlGx-u66j0YfMCttfKBA"
+            apiKey =getYoutubeApiKey2(context)
         )
         val publicAndEmbeddableIds = statusResponse.items.filter {
             it.status.privacyStatus == "public" && it.status.embeddable
@@ -248,6 +270,51 @@ class AppRepository(
             .get()
             .await()
         return if(documentSnapshot.contains("youtubeVideoId"))documentSnapshot.get("youtubeVideoId").toString() else null
+    }
+
+    private suspend fun getAllReferences(courseName: String): String{
+        val response = chat.sendMessage("Get all content reference available on internet for learning $courseName" +
+                "instructions-> provide the content in format - ContentName`content description/information`::ContentName 'content description/information` and so on" +
+                "do not include or write any other word in your response" +
+                "do not include any youtube content" +
+                "you can include references of online courses on coursera or udemy, any online free ebook and so on")
+        return response.text.toString()
+    }
+
+    suspend fun saveAllReferences(courseName:String): String{
+        val allReferences=getAllReferences(courseName)
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(courseName.replace('/','_'))
+            .update(mapOf(
+                "otherResources" to allReferences
+            ))
+        return allReferences
+    }
+
+    suspend fun getSavedReferences(courseName:String): String?{
+        val snapshot = firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(courseName.replace('/','_'))
+            .get()
+            .await()
+        return if(snapshot.contains("otherResources")) snapshot.get("otherResources").toString() else null
+    }
+
+    suspend fun saveUnSplashImageUrl(query: String): String{
+        val url=getUpshashPhoto(query).results[0].urls.regular
+        firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(query.replace('/','_'))
+            .update(mapOf(
+                "image" to url
+            ))
+        return url
+    }
+
+    suspend fun getSavedCourseImage(courseName:String): String?{
+        val snapshot=firestore.collection("users").document(auth.currentUser!!.uid).collection("learning")
+            .document(courseName.replace('/','_'))
+            .get()
+            .await()
+        return if(snapshot.contains("image")) snapshot.get("image").toString() else null
     }
 
 

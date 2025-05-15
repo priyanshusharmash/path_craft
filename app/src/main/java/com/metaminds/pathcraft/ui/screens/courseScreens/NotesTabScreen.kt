@@ -2,7 +2,6 @@ package com.metaminds.pathcraft.ui.screens.courseScreens
 
 import android.annotation.SuppressLint
 import android.widget.Toast
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -15,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -38,8 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.metaminds.pathcraft.NOTES
 import com.metaminds.pathcraft.ui.AppViewModelProvider
 import com.metaminds.pathcraft.ui.navigation.NavigationDestination
 import com.metaminds.pathcraft.ui.screens.ShowLoadingScreen
@@ -49,7 +51,7 @@ import com.metaminds.pathcraft.ui.viewModels.CourseScreenViewModel
 
 object NotesTabScreenNavigationDestination : NavigationDestination {
     override val titleRes: Int? = null
-    override val route: String = "notes"
+    override val route: String = NOTES
 }
 
 @Composable
@@ -109,7 +111,7 @@ private fun NotesTabScreenBody(
         state = lazyListState,
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp)
+        contentPadding = PaddingValues(10.dp)
     ) {
         itemsIndexed(items = topicList) { index, topic ->
             var expandedList = viewModel.expandedItemList
@@ -149,7 +151,7 @@ private fun CheckPointCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.cardElevation(2.dp)
+        shape= RoundedCornerShape(10.dp)
     ) {
         Column(
             modifier = Modifier.padding(8.dp)
@@ -163,13 +165,15 @@ private fun CheckPointCard(
             ) {
                 Text(
                     text = topicName,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier=Modifier.weight(1f)
                 )
                 IconButton(
                     onClick = { changeSubTopicState(!subTopicsShown) }
                 ) {
                     Icon(
-                        modifier = Modifier
+                        modifier = Modifier.width(50.dp)
                             .rotate(if (subTopicsShown) 180F else 0F)
                             .animateContentSize(),
                         imageVector = Icons.Default.KeyboardArrowDown,

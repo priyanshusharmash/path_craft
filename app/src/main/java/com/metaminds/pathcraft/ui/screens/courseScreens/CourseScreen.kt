@@ -1,8 +1,8 @@
 package com.metaminds.pathcraft.ui.screens.courseScreens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,8 +21,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.metaminds.pathcraft.R
@@ -34,12 +34,11 @@ import com.metaminds.pathcraft.ui.screens.DefaultAppBar
 import com.metaminds.pathcraft.ui.viewModels.CourseFetchStatus
 import com.metaminds.pathcraft.ui.viewModels.CourseScreenViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 object CourseScreenNavigationDestination: NavigationDestination{
     override val titleRes: Int = R.string.your_learning
     override val route: String = YOUR_LEARNING
-    const val COURSE :String ="course"
+    const val COURSE :String = com.metaminds.pathcraft.COURSE
     val routeWithArgs = "$route/{$COURSE}"
 }
 
@@ -60,7 +59,7 @@ fun CourseScreen(
     var previousTab by remember { mutableStateOf("") }
     LaunchedEffect(selectedTabIndex) {
         viewModel.courseUiState= CourseFetchStatus.Waiting
-        delay(100)
+        delay(10)
         viewModel.refreshState()
     }
 
@@ -141,14 +140,14 @@ fun CourseScreenNavigationBar(
                     onTabChange(index,destination.route, TabItems.entries[previousTabIndex].route)
 
                 },
-                text = { Text(destination.tabName.replaceFirstChar { it.uppercase() }) }
+                text = { Text(text=stringResource(destination.tabNameRes).replaceFirstChar { it.uppercase() }) }
             )
         }
     }
 }
 
-enum class TabItems(val tabName:String,val route:String){
-    Notes("Notes", NotesTabScreenNavigationDestination.route),
-    Videos("Videos", CourseVideosResourcesTabNavigationDestination.route),
-    Books("Books", CourseBooksResourcesTabNavigationDestination.route)
+enum class TabItems(@StringRes val tabNameRes: Int, val route:String){
+    Notes(R.string.notes_tab_label, NotesTabScreenNavigationDestination.route),
+    Videos(R.string.tutorials_tab_label, CourseVideosResourcesTabNavigationDestination.route),
+    Books(R.string.resources_tab_label, CourseBooksResourcesTabNavigationDestination.route)
 }

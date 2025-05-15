@@ -11,7 +11,7 @@ interface UpslashApiService {
     suspend fun searchPhotos(
         @Query("query")query:String,
         @Query("per_page") perPage: Int = 1,
-        @Query("client_id")clientId: String="Oj8HGOOuFLvFOhtSg8oPxOWI8MC3vgROkCJ62NjV7a8"
+        @Query("client_id")clientId: String
     ): UnsplashSearchResponse
 
 }

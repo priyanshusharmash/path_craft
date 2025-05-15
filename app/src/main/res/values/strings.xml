@@ -26,4 +26,8 @@
     <string name="your_learning">Your learning</string>
     <string name="chat_screen">Hi There!</string>
     <string name="home_screen">Home Screen</string>
+    <string name="resources_tab_label">Resources</string>
+    <string name="tutorials_tab_label">Tutorials</string>
+    <string name="notes_tab_label">Documentation</string>
+
 </resources>

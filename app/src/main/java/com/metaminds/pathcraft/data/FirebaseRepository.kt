@@ -3,6 +3,7 @@ package com.metaminds.pathcraft.data
 import android.R
 import com.google.firebase.auth.FirebaseAuth
 import com.metaminds.pathcraft.ui.viewModels.CourseCheckpoint
+import com.metaminds.pathcraft.ui.viewModels.UserTopics
 
 
 interface FirebaseRepository {
