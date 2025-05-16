@@ -184,7 +184,8 @@ fun HomeScreenBody(
                                 )
                                 .background(color = MaterialTheme.colorScheme.surfaceVariant)
                             ,
-                            navigateToChatScreen= {navigateToChatScreen(null)}
+                            navigateToChatScreen= {navigateToChatScreen(null)},
+                            sectionName = stringResource(R.string.your_learning)
                         )
                     }else if(uiState.userTopics[uiState.userTopics.size-1].imageLink.isEmpty()){
                         val courseList = remember { mutableListOf("")}
@@ -288,7 +289,7 @@ fun UserTopicCard(
            horizontalArrangement = Arrangement.SpaceBetween
        ){
            AsyncImage(
-               model = topicImageUrl,
+               model = "https://cdn.pixabay.com/photo/2025/05/07/19/13/soap-bubbles-9585871_1280.jpg",
                contentDescription = null,
                modifier=imageModifier,
                contentScale = ContentScale.Crop
@@ -353,8 +354,35 @@ fun SectionBody(
 @Composable
 fun ShowEmptySection(
     modifier: Modifier = Modifier,
-    navigateToChatScreen: () -> Unit
+    navigateToChatScreen: () -> Unit,
+    sectionName: String
 ) {
+    Box (
+        modifier=Modifier
+            .padding(PaddingValues(horizontal = 5.dp))
+            .clip(CircleShape)
+            .fillMaxWidth()
+            .background(color = MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.CenterStart
+    ){
+        Text(
+            text=sectionName,
+            modifier=Modifier.padding(horizontal = 15.dp),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        ActionButton(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 10.dp),
+            onClick = {  },
+            painter = painterResource(R.drawable.outline_arrow_right_alt_24),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            tint = MaterialTheme.colorScheme.primaryContainer,
+            iconSize = 25.dp
+        )
+    }
+    Spacer(Modifier.height(15.dp))
     Column (
         modifier=modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,

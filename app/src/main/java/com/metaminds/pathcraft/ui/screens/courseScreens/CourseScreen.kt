@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.metaminds.pathcraft.R
@@ -129,20 +130,34 @@ fun CourseScreenNavigationBar(
     selectedTabIndex: Int,
     onTabChange:(Int, String, String)-> Unit
 ) {
-    TabRow(selectedTabIndex = selectedTabIndex) {
-        var previousTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
-        TabItems.entries.forEachIndexed { index, destination ->
+        ScrollableTabRow(
+            selectedTabIndex = selectedTabIndex,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            var previousTabIndex by remember { mutableIntStateOf(selectedTabIndex) }
+                TabItems.entries.forEachIndexed { index, destination ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = {
+                            previousTabIndex = selectedTabIndex
+                            onTabChange(
+                                index,
+                                destination.route,
+                                TabItems.entries[previousTabIndex].route
+                            )
 
-            Tab(
-                selected = selectedTabIndex == index,
-                onClick = {
-                    previousTabIndex=selectedTabIndex
-                    onTabChange(index,destination.route, TabItems.entries[previousTabIndex].route)
+                        },
+                        text = {
+                            Text(
+                                text = stringResource(destination.tabNameRes).replaceFirstChar { it.uppercase() },
+                                maxLines = 1,
+                                overflow = TextOverflow.Visible,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    )
+                }
 
-                },
-                text = { Text(text=stringResource(destination.tabNameRes).replaceFirstChar { it.uppercase() }) }
-            )
-        }
     }
 }
 

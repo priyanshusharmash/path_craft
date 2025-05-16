@@ -71,7 +71,8 @@ object ChatScreenNavigationDestination : NavigationDestination {
 @Composable
 fun ChatScreen(
     viewModel: ChatScreenViewModel = viewModel(factory = AppViewModelProvider.factory),
-    onBackPressed: () -> Unit
+    onBackPressed: () -> Unit,
+    navigateToChatScreen:()->Unit,
 ) {
     BackHandler {
         viewModel.onBackPressed()
@@ -115,7 +116,8 @@ fun ChatScreen(
                         onStart = {
                             viewModel.onBackPressed()
                             onBackPressed()
-                        }
+                        },
+                        onChangeCourse = {navigateToChatScreen()}
                     )
                 else {
                     ChatBotInputBox(
@@ -260,7 +262,7 @@ fun ChatBotInputBox(
 fun ConfirmDialog(
     modifier: Modifier = Modifier,
     onStart:()-> Unit,
-    onChangeCourse:()-> Unit = { }
+    onChangeCourse:()-> Unit
 ) {
     Column(
         modifier=modifier.fillMaxWidth()

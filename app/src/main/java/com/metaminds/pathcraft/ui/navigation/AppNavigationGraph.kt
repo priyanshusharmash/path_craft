@@ -68,6 +68,11 @@ fun AppNavigationGraph(
             ChatScreen(
                 onBackPressed = {
                     navController.popBackStack()
+                },
+                navigateToChatScreen = {
+                    navController.navigate(ChatScreenNavigationDestination.route){
+                        popUpTo(HomeScreenNavigationDestination.route)
+                    }
                 }
             )
         }
@@ -109,7 +114,12 @@ fun AppNavigationGraph(
                 navArgument(ChatScreenNavigationDestination.COURSE) { type= NavType.StringType }
             )){
             ChatScreen(
-                onBackPressed = {navController.popBackStack()}
+                onBackPressed = {navController.popBackStack()},
+                navigateToChatScreen = {
+                    navController.navigate(ChatScreenNavigationDestination.route){
+                        popUpTo(HomeScreenNavigationDestination.route)
+                    }
+                }
             )
         }
 
