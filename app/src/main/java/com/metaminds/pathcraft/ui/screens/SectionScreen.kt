@@ -3,16 +3,20 @@ package com.metaminds.pathcraft.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarColors
@@ -26,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.play.core.integrity.bs
 import com.metaminds.pathcraft.R
 import com.metaminds.pathcraft.SECTION_SCREEN
 import com.metaminds.pathcraft.ui.AppViewModelProvider
@@ -51,11 +56,21 @@ fun SectionScreen(
     Scaffold (
         modifier=modifier.fillMaxSize(),
         topBar = {
-            DefaultAppBar(scrollBehavior=scrollBehavior, title = stringResource(viewModel.title), onNavIconClick = {onBackPressed()})
+            DefaultAppBar(
+                scrollBehavior=scrollBehavior,
+                title = stringResource(viewModel.title),
+                onNavIconClick = {onBackPressed()},
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
         }
     ){ contentPadding->
         SectionScreenBody(
-            modifier=Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            modifier=Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                .padding(PaddingValues(top = 20.dp)),
             contentPadding = contentPadding,
             viewModel = viewModel,
             navigateToChatScreen = {navigateToChatScreen(it)}
@@ -79,8 +94,9 @@ fun SectionScreenBody(
     ) {
         itemsIndexed(viewModel.decodedCourseList) {index,course->
             SkillCard(
+                modifier=Modifier.sizeIn(minHeight = 90.dp),
                 courseName =course,
-                shape = CircleShape,
+                shape = RoundedCornerShape(topStart = 0.dp, bottomEnd = 0.dp, topEnd = 10.dp, bottomStart = 10.dp),
                 onClick = {navigateToChatScreen(course)}
             )
         }
